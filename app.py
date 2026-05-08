@@ -1,11 +1,18 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+import os
+from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from datetime import datetime
+from werkzeug.utils import secure_filename
 import sqlite3
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'pericia_andalucia_2026_final'
+app.config['SECRET_KEY'] = 'pericia_andalucia_upload_2026'
+app.config['UPLOAD_FOLDER'] = 'static/uploads' # Carpeta donde se guardarán
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Límite de 16MB
 DB_NAME = 'diario_andalucia.db'
+
+# Asegurar que la carpeta de subidas existe
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # --- CONFIGURACIÓN DE LOGIN ---
 login_manager = LoginManager(app)
@@ -21,7 +28,6 @@ def load_user(user_id):
         u = conn.execute('SELECT * FROM usuarios WHERE id = ?', (user_id,)).fetchone()
     return User(u['id'], u['user_id_login'], u['nombre_prensa'], u['provincia'], u['role']) if u else None
 
-# --- UTILIDADES ---
 def conectar_db():
     conn = sqlite3.connect(DB_NAME); conn.row_factory = sqlite3.Row
     return conn
@@ -51,6 +57,11 @@ def inicializar_sistema():
 
 inicializar_sistema()
 
+# --- RUTA PARA SERVIR LAS IMÁGENES ---
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
 # --- RUTAS PÚBLICAS ---
 @app.route('/')
 def home():
@@ -67,38 +78,33 @@ def ver_post(post_id):
         categorias = conn.execute('SELECT * FROM categorias').fetchall()
     return render_template('post.html', post=post, categorias_nav=categorias)
 
-@app.route('/categoria/<nombre>')
-def filtro_categoria(nombre):
-    with conectar_db() as conn:
-        noticias = conn.execute('SELECT * FROM noticias WHERE categoria = ? ORDER BY id DESC', (nombre,)).fetchall()
-        recientes = conn.execute('SELECT * FROM noticias ORDER BY id DESC LIMIT 5').fetchall()
-        categorias = conn.execute('SELECT * FROM categorias').fetchall()
-    return render_template('index.html', noticias=noticias, noticias_recientes=recientes, categorias_nav=categorias, titulo_filtro=nombre, fecha_hoy=datetime.now().strftime("%d/%m/%Y"))
-
-# --- RUTAS PRIVADAS ---
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        with conectar_db() as conn:
-            u = conn.execute('SELECT * FROM usuarios WHERE user_id_login=? AND password=?', (request.form['uid'], request.form['pw'])).fetchone()
-        if u:
-            login_user(User(u['id'], u['user_id_login'], u['nombre_prensa'], u['provincia'], u['role']))
-            return redirect(url_for('home'))
-    return render_template('login.html')
-
+# --- RUTAS DE REDACCIÓN ---
 @app.route('/nuevo', methods=['GET', 'POST'])
 @login_required
 def nuevo_post():
     if request.method == 'POST':
+        # Gestión de la imagen
+        file = request.files['imagen_file']
+        filename_db = ""
+        
+        if file and file.filename != '':
+            filename = secure_filename(file.filename)
+            # Añadir timestamp para evitar archivos duplicados con el mismo nombre
+            filename = f"{datetime.now().timestamp()}_{filename}"
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            filename_db = url_for('uploaded_file', filename=filename)
+
         with conectar_db() as conn:
             conn.execute('INSERT INTO noticias (titulo, entradilla, contenido, autor, provincia, fecha, imagen_url, pie_foto, categoria, estado) VALUES (?,?,?,?,?,?,?,?,?,?)',
-                (request.form['titulo'], request.form['entradilla'], request.form['contenido'], current_user.nombre_prensa, current_user.provincia, datetime.now().strftime("%d/%m/%Y"), request.form['img'], request.form['pie'], request.form['cat'], 'publicado'))
+                (request.form['titulo'], request.form['entradilla'], request.form['contenido'], current_user.nombre_prensa, current_user.provincia, datetime.now().strftime("%d/%m/%Y"), filename_db, request.form['pie'], request.form['cat'], 'publicado'))
             conn.commit()
         return redirect(url_for('home'))
+    
     with conectar_db() as conn:
         cats = conn.execute('SELECT * FROM categorias').fetchall()
     return render_template('editor.html', categorias=cats)
 
+# --- RESTO DE RUTAS (CATEGORIAS, USUARIOS, LOGIN) ---
 @app.route('/admin/usuarios', methods=['GET', 'POST'])
 @login_required
 def gestionar_usuarios():
@@ -125,6 +131,16 @@ def gestionar_categorias():
     with conectar_db() as conn:
         cats = conn.execute('SELECT * FROM categorias').fetchall()
     return render_template('categorias.html', categorias=cats)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        with conectar_db() as conn:
+            u = conn.execute('SELECT * FROM usuarios WHERE user_id_login=? AND password=?', (request.form['uid'], request.form['pw'])).fetchone()
+        if u:
+            login_user(User(u['id'], u['user_id_login'], u['nombre_prensa'], u['provincia'], u['role']))
+            return redirect(url_for('home'))
+    return render_template('login.html')
 
 @app.route('/logout')
 def logout(): logout_user(); return redirect(url_for('home'))

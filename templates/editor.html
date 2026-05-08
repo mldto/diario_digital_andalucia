@@ -8,18 +8,37 @@
 <body class="bg-light p-5">
     <div class="container bg-white p-5 shadow border-top border-dark border-4" style="max-width: 900px;">
         <h2 class="fw-bold mb-4">NUEVA NOTICIA</h2>
-        <form method="POST">
+        <form method="POST" enctype="multipart/form-data">
             <input type="text" name="titulo" class="form-control form-control-lg mb-3" placeholder="Titular..." required>
             <textarea name="entradilla" class="form-control mb-3" placeholder="Entradilla..."></textarea>
+            
             <div class="row mb-3">
-                <div class="col-6"><select name="cat" class="form-select">{% for c in categorias %}<option>{{ c.nombre }}</option>{% endfor %}</select></div>
-                <div class="col-6"><input type="url" name="img" class="form-control" placeholder="URL Imagen Destacada"></div>
+                <div class="col-md-6">
+                    <label class="small fw-bold">SECCIÓN</label>
+                    <select name="cat" class="form-select">
+                        {% for c in categorias %}<option>{{ c.nombre }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="small fw-bold">SUBIR IMAGEN DESTACADA</label>
+                    <input type="file" name="imagen_file" class="form-control" accept="image/*">
+                </div>
             </div>
+
             <input type="text" name="pie" class="form-control mb-3" placeholder="Pie de foto">
-            <textarea name="contenido" id="editor"></textarea>
+            
+            <div class="mb-3">
+                <label class="small fw-bold">CUERPO DE LA NOTICIA</label>
+                <textarea name="contenido" id="editor"></textarea>
+            </div>
+            
             <button class="btn btn-dark w-100 mt-4 py-3 fw-bold">PUBLICAR AHORA</button>
         </form>
     </div>
-    <script>ClassicEditor.create(document.querySelector('#editor'), { toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote'] });</script>
+    <script>
+        ClassicEditor.create(document.querySelector('#editor'), { 
+            toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote'] 
+        });
+    </script>
 </body>
 </html>
