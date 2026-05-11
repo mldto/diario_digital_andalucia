@@ -1,19 +1,42 @@
 <!DOCTYPE html>
-<html>
-<head><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></head>
-<body class="bg-light p-5">
-    <div class="container bg-white p-5 border-top border-warning border-4 shadow">
-        <h3 class="fw-bold mb-4">BORRADORES SIN PUBLICAR</h3>
-        <table class="table">
-            <thead><tr><th>Fecha</th><th>Titular</th><th>Acción</th></tr></thead>
-            <tbody>
-                {% for b in borradores %}
-                <tr><td>{{b.fecha}}</td><td class="fw-bold">{{b.titulo}}</td>
-                <td><a href="/post/{{b.id}}" class="btn btn-sm btn-outline-dark rounded-0">Editar / Ver</a></td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <a href="/" class="btn btn-link text-dark">Volver</a>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mesa de Trabajo - El Diario</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f8f9fa; }
+        .draft-card { background: white; border-left: 5px solid #ffc107; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .btn-work { border-radius: 0; font-weight: bold; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="fw-bold">MESA DE TRABAJO</h1>
+                <p class="text-muted">Artículos guardados pendientes de revisión y publicación.</p>
+            </div>
+            <a href="/" class="btn btn-outline-dark btn-work">VOLVER A PORTADA</a>
+        </div>
+
+        {% for b in borradores %}
+        <div class="draft-card d-flex justify-content-between align-items-center">
+            <div>
+                <small class="text-uppercase text-muted fw-bold">{{ b.categoria }} | {{ b.provincia }}</small>
+                <h3 class="my-1">{{ b.titulo }}</h3>
+                <p class="mb-2 text-muted">{{ b.entradilla[:100] }}...</p>
+                <span class="badge bg-light text-dark border">✍️ {{ b.autor }}</span>
+                <span class="badge bg-light text-dark border">📅 {{ b.fecha }}</span>
+            </div>
+            <div class="text-end">
+                <button class="btn btn-dark btn-work px-4 mb-2">EDITAR / PUBLICAR</button><br>
+                <a href="{{ url_for('eliminar_noticia', id=b.id) }}" class="text-danger fw-bold text-decoration-none small">BORRAR</a>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-info">No hay borradores pendientes. ¡Buen trabajo!</div>
+        {% endfor %}
     </div>
 </body>
 </html>

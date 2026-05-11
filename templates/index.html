@@ -1,45 +1,144 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Diario de Andalucía</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>body{font-family:Georgia,serif}.masthead{border-bottom:5px solid #000;text-align:center;padding:20px 0}.nav-item{text-decoration:none;color:#000;font-family:sans-serif;font-weight:900;text-transform:uppercase;margin:0 10px;font-size:.8rem}</style>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Lora:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;700&display=swap');
+
+        :root {
+            --prensa-black: #1a1a1a;
+            --prensa-accent: #d32f2f;
+        }
+
+        body { font-family: 'Inter', sans-serif; background-color: #fff; }
+        
+        /* Cabecera Clásica */
+        .header-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.5rem;
+            font-weight: 900;
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 4px double #eee;
+            text-decoration: none;
+            color: var(--prensa-black);
+            display: block;
+        }
+
+        /* Barra de Herramientas de Redacción (Solo Staff) */
+        .staff-bar {
+            background: var(--prensa-black);
+            color: white;
+            padding: 10px 0;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+        .staff-bar a { color: #ffc107; text-decoration: none; font-weight: bold; margin-left: 15px; }
+        .staff-bar a:hover { text-decoration: underline; }
+
+        /* Estilo de Noticias */
+        .noticia-item { border-bottom: 1px solid #eee; padding: 40px 0; }
+        .noticia-titulo { 
+            font-family: 'Playfair Display', serif; 
+            font-size: 2.2rem; 
+            font-weight: 900; 
+            color: var(--prensa-black);
+            text-decoration: none;
+            line-height: 1.1;
+        }
+        .noticia-titulo:hover { color: var(--prensa-accent); }
+        .entradilla { font-family: 'Lora', serif; font-size: 1.15rem; color: #555; margin-top: 10px; }
+        
+        .meta-noticia { font-size: 0.8rem; text-transform: uppercase; font-weight: bold; color: var(--prensa-accent); }
+        
+        /* Sidebar */
+        .sidebar-title { border-bottom: 2px solid var(--prensa-black); padding-bottom: 5px; font-weight: 900; margin-bottom: 15px; }
+    </style>
 </head>
 <body>
-    <div class="p-2 border-bottom small fw-bold bg-light container-fluid d-flex justify-content-between">
-        <span>{{ fecha_hoy }} | ANDALUCÍA</span>
-        <div>
-            {% if current_user.is_authenticated %}
-                <a href="/nuevo" class="text-dark me-2">REDACTAR</a>
-                <a href="/borradores" class="text-warning me-2 fw-bold">BORRADORES</a>
-                <a href="/logout" class="text-danger small">SALIR ({{current_user.user_id_login}})</a>
-            {% else %}<a href="/login" class="text-dark">LOGIN</a>{% endif %}
+
+    {% if current_user.is_authenticated %}
+    <div class="staff-bar">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div>
+                <span>● <b>MESA DE REDACCIÓN:</b> Bienvenido, {{ current_user.nombre_prensa }} ({{ current_user.role.upper() }})</span>
+            </div>
+            <div>
+                <a href="{{ url_for('nuevo_post') }}">+ NUEVA NOTICIA</a>
+                <a href="{{ url_for('mis_borradores') }}">📂 BORRADORES</a>
+                
+                {% if current_user.role == 'admin' %}
+                <a href="{{ url_for('gestionar_usuarios') }}">👥 USUARIOS</a>
+                <a href="{{ url_for('gestionar_categorias') }}">🏷️ SECCIONES</a>
+                {% endif %}
+                
+                <a href="{{ url_for('logout') }}" class="text-white ms-4">SALIR</a>
+            </div>
         </div>
     </div>
-    <header class="masthead"><h1>EL DIARIO DE ANDALUCÍA</h1></header>
-    <nav class="p-3 text-center border-bottom">
-        <a href="/" class="nav-item">Portada</a>
-        {% for c in categorias_nav %}<a href="/categoria/{{c.nombre}}" class="nav-item">{{c.nombre}}</a>{% endfor %}
-    </nav>
-    <main class="container mt-4">
-        <div class="row">
-            <div class="col-md-8 border-end">
-                <h6 class="border-bottom pb-2 fw-bold">{{ titulo_filtro }}</h6>
+    {% else %}
+    <div class="staff-bar bg-light text-end pe-5">
+        <a href="{{ url_for('login') }}" class="text-dark small">Acceso Redacción</a>
+    </div>
+    {% endif %}
+
+    <div class="container">
+        <a href="/" class="header-logo">EL DIARIO DE ANDALUCÍA</a>
+        
+        <nav class="d-flex justify-content-center gap-4 my-3 small fw-bold">
+            <a href="/" class="text-dark text-decoration-none border-bottom border-dark">PORTADA</a>
+            {% for c in categorias_nav %}
+            <a href="#" class="text-muted text-decoration-none">{{ c.nombre }}</a>
+            {% endfor %}
+        </nav>
+
+        <div class="row mt-5">
+            <div class="col-lg-8">
                 {% for n in noticias %}
-                <div class="row mb-4 pb-4 border-bottom">
-                    {% if n.imagen_url %}<div class="col-4"><img src="{{n.imagen_url}}" class="img-fluid"></div>{% endif %}
-                    <div class="{% if n.imagen_url %}col-8{% else %}col-12{% endif %}">
-                        <small class="text-primary fw-bold">{{n.categoria}}</small>
-                        <a href="/post/{{n.id}}" class="text-dark text-decoration-none"><h3 class="fw-bold mt-1">{{n.titulo}}</h3></a>
-                        <p class="text-muted small">{{n.entradilla}}</p>
+                <article class="noticia-item">
+                    <div class="row">
+                        <div class="col-md-{% if n.imagen_url %}8{% else %}12{% endif %}">
+                            <span class="meta-noticia">{{ n.categoria }} | {{ n.provincia }}</span>
+                            <h2 class="mt-2">
+                                <a href="{{ url_for('ver_noticia', id=n.id) }}" class="noticia-titulo">{{ n.titulo }}</a>
+                            </h2>
+                            <p class="entradilla">{{ n.entradilla }}</p>
+                            <div class="small text-muted mt-3">
+                                Por <b>{{ n.autor }}</b> — {{ n.fecha }}
+                            </div>
+                        </div>
+                        {% if n.imagen_url %}
+                        <div class="col-md-4">
+                            <img src="{{ n.imagen_url }}" class="img-fluid border" alt="Noticia">
+                        </div>
+                        {% endif %}
                     </div>
+                </article>
+                {% else %}
+                <div class="text-center py-5">
+                    <p class="text-muted">No hay noticias publicadas en este momento.</p>
                 </div>
                 {% endfor %}
             </div>
-            <aside class="col-md-4 ps-4">
-                <h6 class="fw-bold border-bottom pb-2">LO ÚLTIMO</h6>
-                {% for r in noticias_recientes %}<div class="mb-2"><a href="/post/{{r.id}}" class="text-dark small text-decoration-none fw-bold">{{r.titulo}}</a><hr></div>{% endfor %}
-            </aside>
+
+            <div class="col-lg-4 ps-lg-5">
+                <h5 class="sidebar-title">FECHA</h5>
+                <p class="small fw-bold text-uppercase">{{ fecha_hoy }}</p>
+                
+                <div class="card border-0 bg-light p-4 mt-5">
+                    <h6 class="fw-bold">SOBRE NOSOTROS</h6>
+                    <p class="small text-muted">Información veraz y actualizada desde todas las provincias de Andalucía. Rigor, velocidad e independencia profesional.</p>
+                </div>
+            </div>
         </div>
-    </main>
+    </div>
+
+    <footer class="text-center py-5 mt-5 border-top text-muted small">
+        &copy; 2026 El Diario de Andalucía. Todos los derechos reservados.
+    </footer>
+
 </body>
 </html>

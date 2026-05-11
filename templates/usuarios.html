@@ -1,21 +1,55 @@
 <!DOCTYPE html>
-<html>
-<head><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></head>
-<body class="bg-light p-5">
-    <div class="container bg-white p-5 border-top border-dark border-4 shadow-sm" style="max-width:800px">
-        <h3 class="fw-bold mb-4">REGISTRO DE REDACCIÓN</h3>
-        {% with msgs = get_flashed_messages() %}{% for m in msgs %}<div class="alert alert-success">{{m}}</div>{% endfor %}{% endwith %}
-        <form method="POST" class="row g-3 mb-4 p-3 border">
-            <div class="col-6"><input type="text" name="nombre" class="form-control" placeholder="Nombre real" required></div>
-            <div class="col-6"><input type="password" name="pw" class="form-control" placeholder="Contraseña" required></div>
-            <div class="col-6"><select name="prov" class="form-select"><option>Sevilla</option><option>Málaga</option><option>Granada</option></select></div>
-            <div class="col-6"><select name="role" class="form-select"><option value="redactor">Redactor</option><option value="admin">Director</option></select></div>
-            <button class="btn btn-dark w-100">DAR DE ALTA</button>
-        </form>
-        <table class="table small">
-            <thead><tr><th>ID DE ACCESO</th><th>NOMBRE FIRMA</th><th>PROVINCIA</th></tr></thead>
-            <tbody>{% for u in usuarios %}<tr><td class="fw-bold text-primary">{{u.user_id_login}}</td><td>{{u.nombre_prensa}}</td><td>{{u.provincia}}</td></tr>{% endfor %}</tbody>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Usuarios</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <div class="card p-4 mb-4">
+            <h3>PERSONAL DE REDACCIÓN</h3>
+            <form method="POST" class="row g-3">
+                <div class="col-md-3"><input type="text" name="nombre" class="form-control" placeholder="Nombre de pluma" required></div>
+                <div class="col-md-2"><input type="password" name="pw" class="form-control" placeholder="Contraseña" required></div>
+                <div class="col-md-3">
+                    <select name="prov" class="form-select">
+                        {% for p in provincias %}<option value="{{ p.nombre }}">{{ p.nombre }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="role" class="form-select">
+                        <option value="redactor">Redactor</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                </div>
+                <div class="col-md-2"><button type="submit" class="btn btn-dark w-100">OK</button></div>
+            </form>
+        </div>
+
+        <table class="table table-white table-hover shadow-sm bg-white">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th><th>FIRMA</th><th>PROVINCIA</th><th>ROL</th><th>ACCIONES</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in usuarios %}
+                <tr>
+                    <td>{{ u.user_id_login }}</td>
+                    <td>{{ u.nombre_prensa }}</td>
+                    <td>{{ u.provincia }}</td>
+                    <td>{{ u.role }}</td>
+                    <td>
+                        {% if u.user_id_login != 'ADMIN-01' %}
+                        <a href="{{ url_for('borrar_usuario', id=u.id) }}" class="btn btn-sm btn-danger">Eliminar</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
         </table>
+        <a href="/">Volver</a>
     </div>
 </body>
 </html>

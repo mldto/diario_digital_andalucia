@@ -1,53 +1,63 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+    <meta charset="UTF-8">
+    <title>Redacción - El Diario de Andalucía</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
-    <style>.ck-editor__editable { min-height: 350px; }</style>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@900&family=Lora:ital,wght@0,400;0,700;1,400&display=swap');
+        body { background: #f4f7f6; padding: 40px 0; }
+        .paper { background: white; max-width: 900px; margin: auto; padding: 60px; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
+        .input-titular { font-family: 'Playfair Display', serif; font-size: 3rem; font-weight: 900; border: none; width: 100%; margin-bottom: 20px; }
+        .input-entradilla { font-family: 'Lora', serif; font-size: 1.4rem; color: #666; border: none; border-left: 4px solid #ddd; padding-left: 20px; width: 100%; font-style: italic; }
+        .ck-editor__editable { min-height: 500px !important; font-family: 'Lora', serif; font-size: 1.2rem; }
+        .input-titular:focus, .input-entradilla:focus { outline: none; }
+    </style>
 </head>
-<body class="bg-light p-4">
-    <div class="container bg-white p-5 shadow border-top border-dark border-4" style="max-width:900px">
-        <h2 class="fw-bold mb-4">MESA DE REDACCIÓN</h2>
+<body>
+    <div class="paper">
         <form method="POST" enctype="multipart/form-data">
-            <input type="text" name="titulo" class="form-control form-control-lg mb-3 rounded-0" placeholder="Titular de la noticia..." required>
-            <textarea name="entradilla" class="form-control mb-3 rounded-0" placeholder="Entradilla o resumen..."></textarea>
+            <input type="text" name="titulo" class="input-titular" placeholder="Titular..." required>
+            <textarea name="entradilla" class="input-entradilla" rows="3" placeholder="Entradilla..."></textarea>
             
-            <div class="row mb-3">
-                <div class="col-md-6">
+            <div class="row my-4 bg-light p-3">
+                <div class="col-md-4">
                     <label class="small fw-bold">SECCIÓN</label>
-                    <select name="cat" class="form-select rounded-0" required>
-                        {% if not categorias %}
-                            <option value="">DEBES CREAR UNA SECCIÓN PRIMERO</option>
-                        {% endif %}
-                        {% for c in categorias %}
-                            <option value="{{c.nombre}}">{{c.nombre}}</option>
-                        {% endfor %}
+                    <select name="cat" class="form-select">
+                        {% for c in categorias %}<option value="{{ c.nombre }}">{{ c.nombre }}</option>{% endfor %}
                     </select>
                 </div>
-                <div class="col-md-6">
-                    <label class="small fw-bold">IMAGEN DESTACADA (JPG/PNG)</label>
-                    <input type="file" name="imagen_file" class="form-control rounded-0">
-                </div>
-            </div>
-            
-            <input type="text" name="pie" class="form-control mb-3 rounded-0" placeholder="Pie de foto / Autor de la imagen">
-            
-            <textarea name="contenido" id="editor"></textarea>
-            
-            <div class="row g-2 mt-4">
-                <div class="col-md-8">
-                    <button type="submit" name="accion" value="publicar" class="btn btn-dark w-100 py-3 fw-bold rounded-0" {% if not categorias %}disabled{% endif %}>
-                        PUBLICAR EN PORTADA
-                    </button>
+                <div class="col-md-4">
+                    <label class="small fw-bold">FOTO</label>
+                    <input type="file" name="imagen_file" class="form-control">
                 </div>
                 <div class="col-md-4">
-                    <button type="submit" name="accion" value="borrador" class="btn btn-outline-secondary w-100 py-3 fw-bold rounded-0">
-                        GUARDAR BORRADOR
-                    </button>
+                    <label class="small fw-bold">PIE DE FOTO</label>
+                    <input type="text" name="pie" class="form-control">
                 </div>
+            </div>
+
+            <textarea name="contenido" id="editor"></textarea>
+            
+            <div class="mt-5 d-flex gap-2">
+                <button type="submit" name="accion" value="publicar" class="btn btn-dark px-5">PUBLICAR</button>
+                <button type="submit" name="accion" value="borrador" class="btn btn-outline-secondary">BORRADOR</button>
             </div>
         </form>
     </div>
-    <script>ClassicEditor.create(document.querySelector('#editor'));</script>
+
+    <script>
+        ClassicEditor.create(document.querySelector('#editor'), {
+            toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'insertTable', 'undo', 'redo'],
+            heading: {
+                options: [
+                    { model: 'paragraph', title: 'Párrafo', class: 'ck-heading_paragraph' },
+                    { model: 'heading2', view: 'h2', title: 'Subtítulo Grande', class: 'ck-heading_heading2' },
+                    { model: 'heading3', view: 'h3', title: 'Subtítulo Medio', class: 'ck-heading_heading3' }
+                ]
+            }
+        });
+    </script>
 </body>
 </html>
